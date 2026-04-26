@@ -129,5 +129,24 @@ onMounted( async () => {
       <button type="submit">Добавить</button>
     </form>
 
-  </div>
+    <hr />
+
+    <div v-if="workouts.length === 0">Нет тренировок</div>
+    <table border="1" cellpadding="10" style="border-collapse: collapse; width: 100%;">
+      <thead>
+        <tr><th>Дата</th><th>Тип</th><th>Дистанция,км</th><th>Длительность,мин</th><th>Примечания</th><th>Del</th></tr>
+      </thead>
+      <tbody>
+        <!-- Цикл v-for для перебора записей -->
+        <tr v-for="workout in workouts" :key="workout.id">
+          <td>{{ workout.date }}</td>
+          <td>{{ workout.type }}</td>
+          <td>{{ workout.distance }}</td>
+          <td>{{ workout.duration || '-' }}</td>
+          <td>{{ workout.notes || '-' }}</td>
+          <td><button @click="deleteWorkout(workout.id)">&#10062;</button></td>
+        </tr>
+      </tbody>
+    </table>
+
 </template>
