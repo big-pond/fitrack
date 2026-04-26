@@ -105,7 +105,7 @@ onMounted( async () => {
       <label>Год: </label>
       <select v-model="selectedYear" @change="onYearChange">
         <option v-for="year in availableYears" :key="year" :value="year">
-          {{ year }} {{ year === newDate().getFullYear() ? '(текущий)' : year === new Date().getFullYear()-1 ? '(прошлый)' : '' }}
+          {{ year }} {{ year === new Date().getFullYear() ? '(текущий)' : year === new Date().getFullYear()-1 ? '(прошлый)' : '' }}
         </option>"
       </select>
     </div>
