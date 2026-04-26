@@ -148,5 +148,5 @@ onMounted( async () => {
         </tr>
       </tbody>
     </table>
-
+  </div>
 </template>
