@@ -1,4 +1,4 @@
-import {supabase} from './supabaseClient';
+import {supabase} from '../lib/supabaseClient';
 export const workoutSevice = {
   async getAll() {
     const { data, error } = await supabase
