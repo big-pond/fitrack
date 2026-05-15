@@ -22,7 +22,7 @@ const newWorkout = ref({
 
 // Загрузка тренировок за выбранный год
 const loadWorkouts = async () => {
-  if (!user.value || selectedYear.value) return
+  if (!user.value || !selectedYear.value) return
   try {
     workouts.value = await workoutSevice.getByYear(selectedYear.value)
   } catch (error) {
