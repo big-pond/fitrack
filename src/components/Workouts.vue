@@ -105,10 +105,11 @@ onMounted( async () => {
     <!-- Фильтр по году (календарный) -->
     <div> 
       <label>Год: </label>
-      <select v-model="selectedYear" @change="onYearChange">
+      <select v-model="selectedYear" @change="loadWorkouts">
+      <!-- <select v-model="selectedYear" @change="onYearChange"> -->
         <option v-for="year in availableYears" :key="year" :value="year">
           {{ year }} {{ year === new Date().getFullYear() ? '(текущий)' : year === new Date().getFullYear()-1 ? '(прошлый)' : '' }}
-        </option>"
+        </option>
       </select>
     </div>
 
