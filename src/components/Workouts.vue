@@ -78,13 +78,13 @@ onMounted( async () => {
     await loadWorkouts()
   }
 
-  supabase.auth.onAuthStateChange((_event, session) => {
+  supabase.auth.onAuthStateChange(async (_event, session) => {
     user.value = session?.user ?? null
     if (user.value) {
       availableYears.value = generateYearOptions()
       const currentYear = new Date().getFullYear()
       selectedYear.value = currentYear
-      loadWorkouts()
+      await loadWorkouts()
     } else {
       workouts.value = []
     }
