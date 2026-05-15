@@ -6,6 +6,7 @@ import Auth from './Auth.vue'
 
 const workouts = ref([])
 const user = ref(null)
+const errorMessage = ref(null)
 
 const selectedYear = ref(null)
 const availableYears = ref([])
@@ -25,6 +26,7 @@ const loadWorkouts = async () => {
   try {
     workouts.value = await workoutSevice.getByYear(selectedYear.value)
   } catch (error) {
+    errorMessage.value = `Код: ${error.code}\nСообщение: ${error.message}\nДетали: ${error.details || 'нет'}`
     console.error('Ошибка загрузки тренировок:', error)
   }
 }
@@ -130,6 +132,11 @@ onMounted( async () => {
     </form>
 
     <hr />
+    <!-- Временный блок для отображения ошибок -->
+    <div v-if="errorMessage" style="padding: 15px; margin-bottom: 20px; background-color: #ffdddd; color: #aabb00; border: 1px solid #ffcccc; border-radius: 4px;">
+      <strong>Ошибка загрузки данных:</strong>
+      <pre style="margin: 5px 0 0 0; white-space: pre-wrap;">{{ errorMessage }}</pre>
+    </div>
 
     <div v-if="workouts.length === 0">Нет тренировок</div>
     <table border="1" cellpadding="10" style="border-collapse: collapse; width: 100%;">
