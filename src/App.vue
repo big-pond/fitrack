@@ -4,7 +4,7 @@ import Workouts from './components/Workouts.vue';
 
 <template>
   <div id="app">
-    <h1>Мой дневник тренировок</h1>
+    <h1>Дневник тренировок</h1>
     <Workouts />
   </div>
 </template>

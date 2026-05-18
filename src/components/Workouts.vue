@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { supabase } from '../lib/supabaseClient';
 import { workoutSevice } from '../services/workoutService';
 import Auth from './Auth.vue'
@@ -8,8 +8,25 @@ const workouts = ref([])
 const user = ref(null)
 const errorMessage = ref(null)
 
+// Фильтры периода
 const selectedYear = ref(null)
 const availableYears = ref([])
+const selectedMonth = ref('') // Пустая строка означает "Все месяцы"
+
+const monthsList = [
+  { value: 1, name: 'Январь' },
+  { value: 2, name: 'Февраль' },
+  { value: 3, name: 'Март' },
+  { value: 4, name: 'Апрель' },
+  { value: 5, name: 'Май' },
+  { value: 6, name: 'Июнь' },
+  { value: 7, name: 'Июль' },
+  { value: 8, name: 'Август' },
+  { value: 9, name: 'Сентябрь' },
+  { value: 10, name: 'Октябрь' },
+  { value: 11, name: 'Ноябрь' },
+  { value: 12, name: 'Декабрь' }
+]
 
 // Состояние редактирования
 const isEditing = ref(false)
@@ -26,14 +43,103 @@ const initialFormState = () => ({
 
 const newWorkout = ref(initialFormState())
 
-// Загрузка тренировок за выбранный год
+const formatPace = (decimalMinutes) => {
+  if (!decimalMinutes || isNaN(decimalMinutes) || decimalMinutes === Infinity) return '-'
+  const minutes = Math.floor(decimalMinutes)
+  const seconds = Math.round((decimalMinutes - minutes) * 60)
+  return `${minutes}:${seconds < 10 ? '0' : ''}${seconds} /км`
+}
+
+const calculateRowMetrics = (type, distance, duration) => {
+  if (!distance || !duration) return { pace: '-', speed: '-' }
+
+  if (['велосипед', 'велотренажер'].includes(type)) {
+    const speed = (distance / (duration / 60)).toFixed(1)
+    return { pace: '-', speed: `${speed} км/ч` }  
+  } else {
+    const paceDecimal = duration / distance
+    return { pace: formatPace(paceDecimal), speed: '-' }
+  }
+}
+// Авторасчет в форме заполнения
+const formMetrics = computed(() => {
+  const dist = parseFloat(newWorkout.value.distance)
+  const dur = parseFloat(newWorkout.value.duration)
+  const type = newWorkout.value.type
+  return calculateRowMetrics(type, dist, dur)
+})
+
+// ГРУППИРОВКА СТАТИСТИКИ ПО ВИДАМ СПОРТА
+const periodStats = computed(() => {
+  if (workouts.value.length === 0) return null
+
+  const statsGrouped = {}
+
+  workouts.value.forEach(w => {
+    const type = w.type
+    const dist = parseFloat(w.distance) || 0
+    const dur = parseFloat(w.duration) || 0
+
+    // Если такого вида спорта еще нет в объекте — инициализируем его
+    if (!statsGrouped[type]) {
+      statsGrouped[type] = {
+        type: type,
+        count: 0,
+        totalDistance: 0,
+        totalDuration: 0,
+        cardioDistance: 0, // Дистанция для вычисления средних значений
+        cardioDuration: 0
+      }
+    }
+
+    statsGrouped[type].count++
+    statsGrouped[type].totalDistance += dist
+    statsGrouped[type].totalDuration += dur
+
+    if (dist > 0 && dur > 0) {
+      statsGrouped[type].cardioDistance += dist
+      statsGrouped[type].cardioDuration += dur
+    }
+  })
+
+  // Рассчитываем средние показатели для каждого вида спорта
+  return Object.values(statsGrouped).map(sport => {
+    let avgMetric = '-'
+    if (sport.cardioDistance > 0) {
+      if (['велосипед', 'велотренажер'].includes(sport.type)) {
+        // Для вело — средняя скорость
+        avgMetric = `исх. скорость: ${(sport.cardioDistance / (sport.cardioDuration / 60)).toFixed(1)} км/ч`
+      } else {
+        // Для бега/ходьбы/лыж — средний темп
+        avgMetric = `ср. темп: ${formatPace(sport.cardioDuration / sport.cardioDistance)}`
+      }
+    }
+    return {
+      type: sport.type,
+      count: sport.count,
+      totalDistance: sport.totalDistance.toFixed(1),
+      totalDuration: sport.totalDuration ? `${Math.floor(sport.totalDuration / 60)}ч ${Math.round(sport.totalDuration % 60)}м` : '0м',
+      avgMetric: avgMetric
+    }
+  })
+})
+
+// Название выбранного месяца для заголовка статистики
+const selectedMonthName = computed(() => {
+  const month = monthsList.find(m => m.value === selectedMonth.value)
+  return month ? month.name.toLowerCase() : null
+})
+
+
+// Загрузка тренировок с учетом выбранного года и месяца
 const loadWorkouts = async () => {
   if (!user.value || !selectedYear.value) return
   try {
-    workouts.value = await workoutSevice.getByYear(selectedYear.value)
-    errorMessage.value = null // Сбрасываем ошибку при успешной загрузке
+    const monthParam = selectedMonth.value === '' ? null : selectedMonth.value
+    workouts.value = await workoutSevice.getByPeriod(selectedYear.value, monthParam)
+    errorMessage.value = null
   } catch (error) {
-    errorMessage.value = `Код: ${error.code}\nСообщение: ${error.message}\nДетали: ${error.details || 'нет'}`
+    errorMessage.value = `Код: ${error.code}\nСообщение: ${error.message}`
     console.error('Ошибка загрузки тренировок:', error)
   }
 }
@@ -142,19 +248,52 @@ onMounted( async () => {
 
     <hr />
 
-    <!-- Фильтр по году (календарный) -->
-    <div> 
-      <label>Год: </label>
-      <select v-model="selectedYear" @change="loadWorkouts">
-        <option v-for="year in availableYears" :key="year" :value="year">
-          {{ year }} {{ year === new Date().getFullYear() ? '(текущий)' : year === new Date().getFullYear()-1 ? '(прошлый)' : '' }}
-        </option>
-      </select>
+    <!-- БЛОК ФИЛЬТРОВ (ГОД И МЕСЯЦ) -->
+    <div style="display: flex; gap: 15px; align-items: center;"> 
+      <div> 
+        <label>Год: </label>
+        <select v-model="selectedYear" @change="loadWorkouts">
+          <option v-for="year in availableYears" :key="year" :value="year">
+            {{ year }} {{ year === new Date().getFullYear() ? '(текущий)' : year === new Date().getFullYear()-1 ? '(прошлый)' : '' }}
+          </option>
+        </select>
+      </div>
+
+      <div>
+        <label>Месяц: </label>
+        <select v-model="selectedMonth" @change="loadWorkouts">
+          <option value="">Все месяцы</option>
+          <option v-for="month in monthsList" :key="month.value" :value="month.value">
+            {{ month.name }}
+          </option>
+        </select>
+      </div>
     </div>
+
+    <!-- РАЗДЕЛЬНАЯ СТАТИСТИКА ПО ВИДАМ СПОРТА -->
+    <div v-if="periodStats" style="margin: 15px 0; padding: 15px; background-color: #f4f4f9; border-radius: 6px; border-left: 5px solid #2196F3;">
+      <h4 style="margin-top: 0;">Статистика за {{ selectedMonthName ? selectedMonthName + ' ' : '' }}{{ selectedYear }} года:</h4>
+      
+      <!-- Сетка карточек по видам спорта -->
+      <div style="display: flex; gap: 15px; flex-wrap: wrap;">
+        <div v-for="sport in periodStats" :key="sport.type" style="background: #fff; padding: 12px; border-radius: 4px; border: 1px solid #ddd; min-width: 200px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+          <h5 style="margin: 0 0 8px 0; text-transform: uppercase; color: #333; border-bottom: 2px solid #eee; padding-bottom: 4px;">
+            {{ sport.type }}
+          </h5>
+          <div style="font-size: 0.9em; color: #555; line-height: 1.4;">
+            <div>Кол-во: <strong>{{ sport.count }}</strong></div>
+            <div>Дистанция: <strong>{{ sport.totalDistance }} км</strong></div>
+            <div>Время: <strong>{{ sport.totalDuration }}</strong></div>
+            <div style="color: #007BFF; margin-top: 4px;"><strong>{{ sport.avgMetric }}</strong></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
 
     <hr />
 
-    <!-- Динамический заголовок формы -->
+    <!-- Форма добавления/редактирования -->
     <h3>{{ isEditing ? 'Редактировать тренировка' : 'Добавить тренировку' }}</h3>
     <form @submit.prevent="handleSubmit">
       <input type="date" v-model="newWorkout.date" required />
@@ -170,11 +309,24 @@ onMounted( async () => {
       <!-- Модификатор .number гарантирует отправку чисел, а не строк -->
       <input type="number" step="0.1" v-model.number="newWorkout.distance" placeholder="Дистанция (км)" required />
       <input type="number" step="0.01" v-model.number="newWorkout.duration" placeholder="Длительность (мин)" />
+      
+      <!-- Контекстный авторасчет в форме -->
+      <div v-if="newWorkout.duration && newWorkout.distance" style="font-size: 0.9em; color: #555; background: #eef; padding: 5px; border-radius: 4px;">
+        <span v-if="['велосипед', 'велотренажер'].includes(newWorkout.type)">
+          Расчетная скорость: <strong>{{ formMetrics.speed }}</strong>
+        </span>
+        <span v-else>
+          Расчетный темп: <strong>{{ formMetrics.pace }}</strong>
+        </span>
+      </div>
+    
       <textarea v-model="newWorkout.notes" placeholder="Примечание"></textarea>
       
         <!-- Кнопки управления формой -->
-      <button type="submit">{{ isEditing ? 'Сохранить' : 'Добавить' }}</button>
-      <button type="button" v-if="isEditing" @click="cancelEdit">Отмена</button>
+      <div>
+        <button type="submit">{{ isEditing ? 'Сохранить' : 'Добавить' }}</button>
+        <button type="button" v-if="isEditing" @click="cancelEdit">Отмена</button>
+      </div>
     </form>
 
     <hr />
@@ -184,9 +336,9 @@ onMounted( async () => {
       <pre style="margin: 5px 0 0 0; white-space: pre-wrap;">{{ errorMessage }}</pre>
     </div>
 
-    <div v-if="workouts.length === 0">Нет тренировок</div>
+    <div v-if="workouts.length === 0">Нет тренировок за выбранный период</div>
 
-    <table border="1" cellpadding="10" style="border-collapse: collapse; width: 100%;">
+    <table v-else border="1" cellpadding="10" style="border-collapse: collapse; width: 100%;">
       <thead>
         <tr><th>Дата</th><th>Тип</th><th>Дистанция,км</th><th>Длительность,мин</th><th>Примечания</th><th>Действия</th></tr>
       </thead>
@@ -199,8 +351,8 @@ onMounted( async () => {
           <td>{{ workout.duration || '-' }}</td>
           <td>{{ workout.notes || '-' }}</td>
           <td>
-            <button @click="startEdit(workout)" title="Редактировать">&#9999;</button>
-            <button @click="deleteWorkout(workout.id)" title="Удалить">&#10062;</button>
+            <button @click="startEdit(workout)" title="Редактировать">✏️</button>
+            <button @click="deleteWorkout(workout.id)" title="Удалить">❎</button>
           </td>
         </tr>
       </tbody>
