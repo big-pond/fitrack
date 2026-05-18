@@ -11,8 +11,12 @@ const errorMessage = ref(null)
 const selectedYear = ref(null)
 const availableYears = ref([])
 
-//  Форма добавления
-const newWorkout = ref({
+// Состояние редактирования
+const isEditing = ref(false)
+const editingId = ref(null)
+
+// Начальное состояние формы
+const initialFormState = () => ({
   date: new Date().toISOString().slice(0,10),
   type: 'бег',
   duration: null,
@@ -20,35 +24,71 @@ const newWorkout = ref({
   notes: null
 })
 
+const newWorkout = ref(initialFormState())
+
 // Загрузка тренировок за выбранный год
 const loadWorkouts = async () => {
   if (!user.value || !selectedYear.value) return
   try {
     workouts.value = await workoutSevice.getByYear(selectedYear.value)
+    errorMessage.value = null // Сбрасываем ошибку при успешной загрузке
   } catch (error) {
     errorMessage.value = `Код: ${error.code}\nСообщение: ${error.message}\nДетали: ${error.details || 'нет'}`
     console.error('Ошибка загрузки тренировок:', error)
   }
 }
 
-// Добавление тренировки
-const addWorkout = async () => {
-  await workoutSevice.add(newWorkout.value)
-  await loadWorkouts()
-  newWorkout.value = {
-    date: new Date().toISOString().slice(0,10),
-    type: 'бег',
-    duration: null,
-    distance: 1.0,
-    notes: null
+// Сохранение (Добавление или Обновление)
+const handleSubmit = async () => {
+  try {
+    // Подготовка данных: заменяем пустые строки на null
+    const payload = {
+      date: newWorkout.value.date,
+      type: newWorkout.value.type,
+      duration: newWorkout.value.duration || null,
+      distance: newWorkout.value.distance,
+      notes: newWorkout.value.notes?.trim() || null
+    }
+
+    if (isEditing.value) {
+      await workoutSevice.update(editingId.value, payload)
+      cancelEdit()
+    } else {
+      await workoutSevice.add(payload)
+      newWorkout.value = initialFormState()
+    }
+    
+    await loadWorkouts()
+  } catch (error) {
+    errorMessage.value = `Ошибка сохранения: ${error.message}`
   }
+}
+
+// Включение режима редактирования
+const startEdit = (workout) => {
+  isEditing.value = true
+  editingId.value = workout.id
+  // Копируем данные в форму
+  newWorkout.value = { ...workout }
+}
+
+// Отмена редактирования
+const cancelEdit = () => {
+  isEditing.value = false
+  editingId.value = null
+  newWorkout.value = initialFormState()
 }
 
 // Удаление
 const deleteWorkout = async (id) => {
   if (confirm('Удалить тренировку?')) {
-    await workoutSevice.delete(id)
-    await loadWorkouts()
+    try {
+      await workoutSevice.delete(id)
+      if (isEditing.value && editingId.value === id) cancelEdit()
+      await loadWorkouts()
+    } catch (error) {
+      errorMessage.value = `Ошибка удаления: ${error.message}`
+    }
   }
 }
 
@@ -106,7 +146,6 @@ onMounted( async () => {
     <div> 
       <label>Год: </label>
       <select v-model="selectedYear" @change="loadWorkouts">
-      <!-- <select v-model="selectedYear" @change="onYearChange"> -->
         <option v-for="year in availableYears" :key="year" :value="year">
           {{ year }} {{ year === new Date().getFullYear() ? '(текущий)' : year === new Date().getFullYear()-1 ? '(прошлый)' : '' }}
         </option>
@@ -115,8 +154,9 @@ onMounted( async () => {
 
     <hr />
 
-    <h3>Добавить тренировку</h3>
-    <form @submit.prevent="addWorkout">
+    <!-- Динамический заголовок формы -->
+    <h3>{{ isEditing ? 'Редактировать тренировка' : 'Добавить тренировку' }}</h3>
+    <form @submit.prevent="handleSubmit">
       <input type="date" v-model="newWorkout.date" required />
       <select v-model="newWorkout.type">
         <option>бег</option>
@@ -126,33 +166,42 @@ onMounted( async () => {
         <option>плавание</option>
         <option>лыжи</option>
       </select>
-      <input type="number" step="0.1" v-model="newWorkout.distance" placeholder="Дистанция (км)" required />
-      <input type="number" step="0.01" v-model="newWorkout.duration" placeholder="Длительность (мин)" />
+
+      <!-- Модификатор .number гарантирует отправку чисел, а не строк -->
+      <input type="number" step="0.1" v-model.number="newWorkout.distance" placeholder="Дистанция (км)" required />
+      <input type="number" step="0.01" v-model.number="newWorkout.duration" placeholder="Длительность (мин)" />
       <textarea v-model="newWorkout.notes" placeholder="Примечание"></textarea>
-      <button type="submit">Добавить</button>
+      
+        <!-- Кнопки управления формой -->
+      <button type="submit">{{ isEditing ? 'Сохранить' : 'Добавить' }}</button>
+      <button type="button" v-if="isEditing" @click="cancelEdit">Отмена</button>
     </form>
 
     <hr />
     <!-- Временный блок для отображения ошибок -->
     <div v-if="errorMessage" style="padding: 15px; margin-bottom: 20px; background-color: #ffdddd; color: #aabb00; border: 1px solid #ffcccc; border-radius: 4px;">
-      <strong>Ошибка загрузки данных:</strong>
+      <strong>Ошибка:</strong>
       <pre style="margin: 5px 0 0 0; white-space: pre-wrap;">{{ errorMessage }}</pre>
     </div>
 
     <div v-if="workouts.length === 0">Нет тренировок</div>
+
     <table border="1" cellpadding="10" style="border-collapse: collapse; width: 100%;">
       <thead>
-        <tr><th>Дата</th><th>Тип</th><th>Дистанция,км</th><th>Длительность,мин</th><th>Примечания</th><th>Del</th></tr>
+        <tr><th>Дата</th><th>Тип</th><th>Дистанция,км</th><th>Длительность,мин</th><th>Примечания</th><th>Действия</th></tr>
       </thead>
       <tbody>
         <!-- Цикл v-for для перебора записей -->
-        <tr v-for="workout in workouts" :key="workout.id">
+        <tr v-for="workout in workouts" :key="workout.id" :style="editingId === workout.id ? 'background-color: #f0f7ff;' : ''">
           <td>{{ workout.date }}</td>
           <td>{{ workout.type }}</td>
           <td>{{ workout.distance }}</td>
           <td>{{ workout.duration || '-' }}</td>
           <td>{{ workout.notes || '-' }}</td>
-          <td><button @click="deleteWorkout(workout.id)">&#10062;</button></td>
+          <td>
+            <button @click="startEdit(workout)" title="Редактировать">&#9999;</button>
+            <button @click="deleteWorkout(workout.id)" title="Удалить">&#10062;</button>
+          </td>
         </tr>
       </tbody>
     </table>
