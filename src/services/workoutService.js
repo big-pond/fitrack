@@ -50,12 +50,12 @@ export const workoutSevice = {
     return data;
   },  
 
-
   // Добавить тренировку (user_id подставляется автоматически через RLS)
   async add(workout) {
     const { data, error } = await supabase
       .from('workouts')
       .insert([{
+        user_id: workout.user_id,
         date: workout.date,
         type: workout.type,
         duration: workout.duration || null,
@@ -66,6 +66,7 @@ export const workoutSevice = {
     if (error) throw error
     return data[0]
   },
+  
   async update(id, updates) {
     const { data, error } = await supabase
       .from('workouts')

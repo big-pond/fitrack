@@ -149,6 +149,7 @@ const handleSubmit = async () => {
   try {
     // Подготовка данных: заменяем пустые строки на null
     const payload = {
+      user_id: user.value.id,
       date: newWorkout.value.date,
       type: newWorkout.value.type,
       duration: newWorkout.value.duration || null,
