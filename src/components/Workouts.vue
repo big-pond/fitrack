@@ -42,6 +42,54 @@ const initialFormState = () => ({
 })
 
 const newWorkout = ref(initialFormState())
+const durationInputString = ref('00:00:00')
+
+const handleFocus = () => {
+  if (durationInputString.value === '00:00:00') {
+    durationInputString.value = ''
+  }
+}
+
+const handleBlur = () => {
+  if (durationInputString.value === '') {
+    durationInputString.value = '00:00:00'
+  }
+}
+
+// Функция автоматической подстановки двоеточий при наборе текста
+const handleDurationInput = (event) => {
+  // Получаем только цифры из того, что ввел пользователь
+  let value = event.target.value.replace(/\D/g, '')
+  
+  // Ограничиваем ввод максимум 6 цифрами (ЧЧММСС)
+  if (value.length > 6) {
+    value = value.slice(0, 6)
+  }
+
+  // Наращиваем маску в зависимости от количества введенных цифр
+  let formatted = ''
+  if (value.length > 0) {
+    // Часы
+    formatted += value.slice(0, 2)
+  }
+  if (value.length > 2) {
+    // Минуты
+    formatted += ':' + value.slice(2, 4)
+  }
+  if (value.length > 4) {
+    // Секунды
+    formatted += ':' + value.slice(4, 6)
+  }
+
+  // Обновляем значение в инпуте
+  durationInputString.value = formatted
+}
+
+// При очистке формы сбрасываем и текстовое поле времени
+const resetForm = () => {
+  newWorkout.value = initialFormState()
+  durationInputString.value = '00:00:00'
+}
 
 const formatPace = (decimalMinutes) => {
   if (!decimalMinutes || isNaN(decimalMinutes) || decimalMinutes === Infinity) return '-'
@@ -50,21 +98,53 @@ const formatPace = (decimalMinutes) => {
   return `${minutes}:${seconds < 10 ? '0' : ''}${seconds} /км`
 }
 
+// Конвертация из "ЧЧ:ММ:СС" в дробные минуты для Supabase
+const timeStringToMinutes = (timeStr) => {
+  if (!timeStr) return null
+  const parts = timeStr.split(':')
+  if (parts.length !== 3) return null
+  
+  const hours = parseInt(parts[0], 10) || 0
+  const minutes = parseInt(parts[1], 10) || 0
+  const seconds = parseInt(parts[2], 10) || 0
+  
+  const totalSeconds = (hours * 3600) + (minutes * 60) + seconds
+  return totalSeconds > 0 ? totalSeconds / 60 : null
+}
+
+// Конвертация из минут (числа) в строку "ЧЧ:ММ:СС" для формы и таблицы
+const formatDuration = (totalMinutes) => {
+  if (!totalMinutes || isNaN(totalMinutes) || totalMinutes <= 0) return '-'
+  
+  // Переводим все в секунды, чтобы избежать проблем с округлением дробных минут
+  const totalSeconds = Math.round(totalMinutes * 60)
+  const hours = Math.floor(totalSeconds / 3600)
+  const minutes = Math.floor((totalSeconds % 3600) / 60)
+  const seconds = totalSeconds % 60
+  
+  // Добавляем ведущие нули, если число меньше 10 (например, "05" вместо "5")
+  const pad = (num) => String(num).padStart(2, '0')
+  return `${pad(hours)}:${pad(minutes)}:${pad(seconds)}`
+}
+
 const calculateRowMetrics = (type, distance, duration) => {
   if (!distance || !duration) return { pace: '-', speed: '-' }
 
+  const dist = parseFloat(distance)
+  const dur = parseFloat(duration)
+  
   if (['велосипед', 'велотренажер'].includes(type)) {
-    const speed = (distance / (duration / 60)).toFixed(1)
+    const speed = (dist / (dur / 60)).toFixed(1)
     return { pace: '-', speed: `${speed} км/ч` }  
   } else {
-    const paceDecimal = duration / distance
+    const paceDecimal = dur / dist
     return { pace: formatPace(paceDecimal), speed: '-' }
   }
 }
 // Авторасчет в форме заполнения
 const formMetrics = computed(() => {
   const dist = parseFloat(newWorkout.value.distance)
-  const dur = parseFloat(newWorkout.value.duration)
+  const dur = timeStringToMinutes(durationInputString.value)
   const type = newWorkout.value.type
   return calculateRowMetrics(type, dist, dur)
 })
@@ -147,12 +227,14 @@ const loadWorkouts = async () => {
 // Сохранение (Добавление или Обновление)
 const handleSubmit = async () => {
   try {
-    // Подготовка данных: заменяем пустые строки на null
+     // Конвертируем введенное пользователем ЧЧ:ММ:СС в число минут перед отправкой
+    const calculatedMinutes = timeStringToMinutes(durationInputString.value)
+   // Подготовка данных: заменяем пустые строки на null
     const payload = {
       user_id: user.value.id,
       date: newWorkout.value.date,
       type: newWorkout.value.type,
-      duration: newWorkout.value.duration || null,
+      duration: calculatedMinutes,
       distance: newWorkout.value.distance,
       notes: newWorkout.value.notes?.trim() || null
     }
@@ -162,7 +244,7 @@ const handleSubmit = async () => {
       cancelEdit()
     } else {
       await workoutSevice.add(payload)
-      newWorkout.value = initialFormState()
+      resetForm()
     }
     
     await loadWorkouts()
@@ -177,13 +259,15 @@ const startEdit = (workout) => {
   editingId.value = workout.id
   // Копируем данные в форму
   newWorkout.value = { ...workout }
+  // Заполняем поле ЧЧ:ММ:СС текущим временем тренировки
+  durationInputString.value = formatDuration(workout.duration)
 }
 
 // Отмена редактирования
 const cancelEdit = () => {
   isEditing.value = false
   editingId.value = null
-  newWorkout.value = initialFormState()
+  resetForm()
 }
 
 // Удаление
@@ -309,8 +393,23 @@ onMounted( async () => {
 
       <!-- Модификатор .number гарантирует отправку чисел, а не строк -->
       <input type="number" step="0.1" v-model.number="newWorkout.distance" placeholder="Дистанция (км)" required />
-      <input type="number" step="0.01" v-model.number="newWorkout.duration" placeholder="Длительность (мин)" />
+      <!-- <input type="number" step="0.01" v-model.number="newWorkout.duration" placeholder="Длительность (мин)" /> -->
       
+      <div style="display: flex; flex-direction: column; gap: 2px;">
+        <label style="font-size: 0.85em; color: #666;">Длительность (ЧЧ:ММ:СС):</label>
+        <input 
+          type="text" 
+          :value="durationInputString"
+          @input="handleDurationInput"
+          @focus="handleFocus"
+          @blur="handleBlur"
+          placeholder="ЧЧ:ММ:СС" 
+          maxlength="8"
+          required 
+          style="padding: 6px; width: 120px; text-align: center; font-family: monospace; letter-spacing: 1px; font-size: 1.1em;"
+        />
+      </div>
+
       <!-- Контекстный авторасчет в форме -->
       <div v-if="newWorkout.duration && newWorkout.distance" style="font-size: 0.9em; color: #555; background: #eef; padding: 5px; border-radius: 4px;">
         <span v-if="['велосипед', 'велотренажер'].includes(newWorkout.type)">
@@ -341,7 +440,7 @@ onMounted( async () => {
 
     <table v-else border="1" cellpadding="10" style="border-collapse: collapse; width: 100%;">
       <thead>
-        <tr><th>Дата</th><th>Тип</th><th>Дистанция,км</th><th>Длительность,мин</th><th>Примечания</th><th>Действия</th></tr>
+        <tr><th>Дата</th><th>Тип</th><th>Дистанция,км</th><th>Длительность</th><th>Скорость</th><th>Примечания</th><th>Действия</th></tr>
       </thead>
       <tbody>
         <!-- Цикл v-for для перебора записей -->
@@ -349,7 +448,18 @@ onMounted( async () => {
           <td>{{ workout.date }}</td>
           <td>{{ workout.type }}</td>
           <td>{{ workout.distance }}</td>
-          <td>{{ workout.duration || '-' }}</td>
+          <td>{{ formatDuration(workout.duration) === '00:00:00' ? '-' : formatDuration(workout.duration) }}</td>
+          <!-- Объединенная колонка для удобства чтения разных видов спорта -->
+          <td>
+            <span v-if="['велосипед', 'велотренажер'].includes(workout.type)">
+              {{ calculateRowMetrics(workout.type, workout.distance, workout.duration).speed }}
+            </span>
+            <span v-else>
+              {{ calculateRowMetrics(workout.type, workout.distance, workout.duration).pace }}
+            </span>
+          </td>
+
+
           <td>{{ workout.notes || '-' }}</td>
           <td>
             <button @click="startEdit(workout)" title="Редактировать">✏️</button>
