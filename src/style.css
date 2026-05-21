@@ -294,3 +294,12 @@ code {
     border-right-color: var(--border);
   }
 }
+
+select, 
+input[type="date"], 
+input[type="number"],
+input[type="text"] {
+  padding: 8px 12px; /* Увеличенный внутренний отступ для высоты */
+  font-size: 1.1em;   /* Пропорциональное увеличение текста внутри полей */
+  box-sizing: border-box;
+}

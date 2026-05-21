@@ -393,35 +393,48 @@ onMounted( async () => {
 
       <!-- Модификатор .number гарантирует отправку чисел, а не строк -->
       <input type="number" step="0.1" v-model.number="newWorkout.distance" placeholder="Дистанция (км)" required />
-      <!-- <input type="number" step="0.01" v-model.number="newWorkout.duration" placeholder="Длительность (мин)" /> -->
       
-      <div style="display: flex; flex-direction: column; gap: 2px;">
-        <label style="font-size: 0.85em; color: #666;">Длительность (ЧЧ:ММ:СС):</label>
-        <input 
-          type="text" 
-          :value="durationInputString"
-          @input="handleDurationInput"
-          @focus="handleFocus"
-          @blur="handleBlur"
-          placeholder="ЧЧ:ММ:СС" 
-          maxlength="8"
-          required 
-          style="padding: 6px; width: 120px; text-align: center; font-family: monospace; letter-spacing: 1px; font-size: 1.1em;"
-        />
-      </div>
+      <!-- Контейнер для расположения рядом (Явный Flexbox) -->
+      <div style="display: flex !important; flex-direction: row !important; gap: 15px; align-items: flex-start; width: 100%; margin-top: 5px;">
+        
+        <!-- Колонка длительности (фиксированная ширина, не растягивается) -->
+        <div style="flex: 0 0 140px; display: flex; flex-direction: column; gap: 2px;">
+          <label style="font-size: 0.85em; color: #666;">Длительность:</label>
+          <input 
+            type="text" 
+            :value="durationInputString"
+            @input="handleDurationInput"
+            @focus="handleFocus"
+            @blur="handleBlur"
+            placeholder="ЧЧ:ММ:СС" 
+            maxlength="8"
+            required 
+            style="width: 100%; box-sizing: border-box;" 
+          />
+          
+          <!-- Контекстный авторасчет -->
+          <div v-if="durationInputString !== '00:00:00' && durationInputString !== '' && newWorkout.distance" 
+              style="font-size: 0.8em; color: #333; background: #eef; padding: 4px 6px; border-radius: 4px; margin-top: 4px; white-space: nowrap;">
+            <span v-if="['велосипед', 'велотренажер'].includes(newWorkout.type)">
+              Скорость: <strong>{{ formMetrics.speed }}</strong>
+            </span>
+            <span v-else>
+              Темп: <strong>{{ formMetrics.pace }}</strong>
+            </span>
+          </div>
+        </div>
 
-      <!-- Контекстный авторасчет в форме -->
-      <div v-if="newWorkout.duration && newWorkout.distance" style="font-size: 0.9em; color: #555; background: #eef; padding: 5px; border-radius: 4px;">
-        <span v-if="['велосипед', 'велотренажер'].includes(newWorkout.type)">
-          Расчетная скорость: <strong>{{ formMetrics.speed }}</strong>
-        </span>
-        <span v-else>
-          Расчетный темп: <strong>{{ formMetrics.pace }}</strong>
-        </span>
+        <!-- Колонка примечания (занимает всё оставшееся место) -->
+        <div style="flex: 1; display: flex; flex-direction: column; gap: 2px; width: 100%;">
+          <label style="font-size: 0.85em; color: #666;">Примечание:</label>
+          <textarea 
+            v-model="newWorkout.notes" 
+            placeholder="Примечание"
+            style="width: 100%; height: 38px; padding: 8px; font-size: 1em; box-sizing: border-box; resize: vertical;"
+          ></textarea>
+        </div>
+
       </div>
-    
-      <textarea v-model="newWorkout.notes" placeholder="Примечание"></textarea>
-      
         <!-- Кнопки управления формой -->
       <div>
         <button type="submit">{{ isEditing ? 'Сохранить' : 'Добавить' }}</button>
