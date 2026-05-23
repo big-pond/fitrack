@@ -462,7 +462,7 @@ onMounted( async () => {
 
     <table v-else class="workouts-table">
       <thead>
-        <tr><th>Дата</th><th>Тип</th><th>Дистанция,км</th><th>Длительность</th><th>Скорость</th><th>Примечания</th><th>Действия</th></tr>
+        <tr><th>Дата</th><th>Тип</th><th>Дистан-<br />ция, км</th><th>Длитель-<br />ность</th><th>Скорость</th><th>Примечания</th><th>Действия</th></tr>
       </thead>
       <tbody>
         <!-- Цикл v-for для перебора записей -->

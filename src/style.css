@@ -261,6 +261,8 @@ p {
 .workouts-table th {
   background-color: #f2f2f2;
   font-weight: bold;
+  white-space: normal !important; /* Разрешаем перенос слов внутри заголовков */
+  vertical-align: bottom; /* Выравниваем весь текст заголовков по нижней границе ячейки */
 }
 
 /* Стилизация строк при наведении и редактировании */
@@ -286,13 +288,13 @@ p {
   background-color: #e0e0e0;
 }
 
-/* Запрет переноса даты в таблице тренировок */
+/* Настройка отображения даты в таблице тренировок */
 .workouts-table td:first-child {
   white-space: nowrap !important;
-  font-family: monospace; /* Моноширинный шрифт сделает все даты одинаковой ширины */
-  letter-spacing: 0.5px;
+  font-family: inherit; /* Возвращаем стандартный шрифт вместо широкого monospace */
+  letter-spacing: normal; /* Сбрасываем увеличенный межбуквенный интервал */
+  font-size: 0.95em; /* Можно слегка уменьшить размер, чтобы дата выглядела компактнее */
 }
-
 
 
 code,
