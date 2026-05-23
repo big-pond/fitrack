@@ -379,27 +379,46 @@ onMounted( async () => {
     <hr />
 
     <!-- Форма добавления/редактирования -->
-    <h3>{{ isEditing ? 'Редактировать тренировка' : 'Добавить тренировку' }}</h3>
-    <form @submit.prevent="handleSubmit">
-      <input type="date" v-model="newWorkout.date" required />
-      <select v-model="newWorkout.type">
-        <option>бег</option>
-        <option>ходьба</option>
-        <option>велосипед</option>
-        <option>велотренажер</option>
-        <option>плавание</option>
-        <option>лыжи</option>
-      </select>
+    <h3>{{ isEditing ? 'Редактировать тренировку' : 'Добавить тренировку' }}</h3>
+    <!-- <form @submit.prevent="handleSubmit"> -->
+    <form @submit.prevent="handleSubmit" style="display: flex; flex-direction: column; gap: 12px; max-width: 500px; width: 100%;">
 
-      <!-- Модификатор .number гарантирует отправку чисел, а не строк -->
-      <input type="number" step="0.1" v-model.number="newWorkout.distance" placeholder="Дистанция (км)" required />
-      
+      <!-- СТРОКА 1: Дата, Тип тренировки, Дистанция -->
+      <div style="display: flex !important; flex-direction: row !important; gap: 15px; align-items: flex-start; width: 100%;">
+        
+        <!-- Поле: Дата -->
+        <div style="flex: 1 1 150px; display: flex; flex-direction: column; gap: 4px;">
+          <label style="font-size: 0.85em; color: #666; font-weight: bold;">Дата:</label>
+          <input type="date" v-model="newWorkout.date" required style="width: 100%; box-sizing: border-box;" />
+        </div>
+
+        <!-- Поле: Тип тренировки -->
+        <div style="flex: 1 1 160px; display: flex; flex-direction: column; gap: 4px;">
+          <label style="font-size: 0.85em; color: #666; font-weight: bold;">Тип тренировки:</label>
+          <select v-model="newWorkout.type" style="width: 100%; box-sizing: border-box;">
+            <option>бег</option>
+            <option>ходьба</option>
+            <option>велосипед</option>
+            <option>велотренажер</option>
+            <option>плавание</option>
+            <option>лыжи</option>
+          </select>
+        </div>
+
+        <!-- Поле: Дистанция -->
+        <div style="flex: 1 1 120px; display: flex; flex-direction: column; gap: 4px;">
+          <label style="font-size: 0.85em; color: #666; font-weight: bold;">Дистанция (км):</label>
+          <input type="number" step="0.1" v-model.number="newWorkout.distance" placeholder="0.0" required style="width: 100%; box-sizing: border-box;" />
+        </div>
+
+      </div>
+        
       <!-- Контейнер для расположения рядом (Явный Flexbox) -->
       <div style="display: flex !important; flex-direction: row !important; gap: 15px; align-items: flex-start; width: 100%; margin-top: 5px;">
         
         <!-- Колонка длительности (фиксированная ширина, не растягивается) -->
         <div style="flex: 0 0 140px; display: flex; flex-direction: column; gap: 2px;">
-          <label style="font-size: 0.85em; color: #666;">Длительность:</label>
+          <label style="font-size: 0.85em; color: #666; font-weight: bold;">Длительность:</label>
           <input 
             type="text" 
             :value="durationInputString"
@@ -426,7 +445,7 @@ onMounted( async () => {
 
         <!-- Колонка примечания (занимает всё оставшееся место) -->
         <div style="flex: 1; display: flex; flex-direction: column; gap: 2px; width: 100%;">
-          <label style="font-size: 0.85em; color: #666;">Примечание:</label>
+          <label style="font-size: 0.85em; color: #666; font-weight: bold;">Примечание:</label>
           <textarea 
             v-model="newWorkout.notes" 
             placeholder="Примечание"
