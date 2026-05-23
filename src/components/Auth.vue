@@ -26,7 +26,7 @@ const signIn = async () => {
     <input v-model="email" type="email" placeholder="Email" />      
     <input v-model="password" type="password" placeholder="Пароль" />      
     <button :disabled="loading" @click="signIn">Войти</button>
-    <!-- <button :disabled="loading" @click="signUp">Регистрация</button> -->
+    <!-- <button :disabled="loading" @click="signUp">Регистрация</button>  -->
     <button @click="signUp" disabled>Регистрация</button>
   </div>
 </template>
