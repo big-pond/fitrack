@@ -83,6 +83,218 @@ p {
   margin: 0;
 }
 
+/* Контейнер для блока фильтров года и месяца */
+.filters-container {
+  display: flex;
+  gap: 15px;
+  align-items: center;
+  margin-bottom: 15px; /* Небольшой отступ снизу для баланса интерфейса */
+}
+
+/* Элемент фильтра (обертка для пары label + select) */
+.filter-item {
+  display: flex;
+  align-items: center;
+  gap: 5px; /* Отступ между текстовой меткой и выпадающим списком */
+}
+
+/* Главный контейнер блока статистики */
+.stats-container {
+  margin: 15px 0;
+  padding: 15px;
+  background-color: #f4f4f9;
+  border-radius: 6px;
+  border-left: 5px solid #2196f3;
+}
+
+/* Заголовок статистики */
+.stats-title {
+  margin-top: 0;
+}
+
+/* Сетка (флекс-контейнер) для карточек */
+.stats-grid {
+  display: flex;
+  gap: 15px;
+  flex-wrap: wrap;
+}
+
+/* Отдельная карточка вида спорта */
+.stats-card {
+  background: #fff;
+  padding: 12px;
+  border-radius: 4px;
+  border: 1px solid #ddd;
+  min-width: 200px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+/* Заголовок внутри карточки (название вида спорта) */
+.stats-card-type {
+  margin: 0 0 8px 0;
+  text-transform: uppercase;
+  color: #333;
+  border-bottom: 2px solid #eee;
+  padding-bottom: 4px;
+}
+
+/* Тело с текстом внутри карточки */
+.stats-card-body {
+  font-size: 0.9em;
+  color: #555;
+  line-height: 1.4;
+}
+
+/* Выделенный цветом расчетный средний показатель */
+.stats-card-metric {
+  color: #007bff;
+  margin-top: 4px;
+}
+
+
+
+/* Контейнер формы */
+.workout-form {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  max-width: 650px;
+  width: 100%;
+}
+
+/* Строки формы (флекс-контейнеры для полей) */
+.form-row-custom {
+  display: flex !important;
+  flex-direction: row !important;
+  gap: 15px;
+  align-items: flex-start;
+  width: 100%;
+}
+
+/* Элементы первой строки с гибкой шириной */
+.col-date { flex: 1 1 150px; display: flex; flex-direction: column; }
+.col-type { flex: 1 1 160px; display: flex; flex-direction: column; }
+.col-distance { flex: 1 1 120px; display: flex; flex-direction: column; }
+
+/* Элементы второй строки */
+.col-duration { 
+  flex: 0 0 140px; 
+  display: flex; 
+  flex-direction: column; 
+  position: relative; 
+}
+.col-notes { 
+  flex: 1; 
+  display: flex; 
+  flex-direction: column; 
+  width: 100%; 
+}
+
+/* Внутренние элементы для правильного заполнения ширины */
+.workout-form input,
+.workout-form select,
+.workout-form textarea {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* Текстовое поле примечания */
+.workout-form textarea {
+  height: 38px;
+  resize: vertical;
+}
+
+/* Контейнер кнопок */
+.form-actions {
+  margin-top: 5px;
+}
+.form-actions button {
+  padding: 8px 16px;
+  font-size: 1em;
+}
+
+/* Стили для текстовых меток полей формы */
+.form-label {
+  font-size: 0.85em;
+  color: #666;
+  font-weight: bold;
+  margin-bottom: 4px; /* Заменяет инлайн-стиль gap: 4px у родительского div */
+  display: inline-block; /* Чтобы корректно работал отступ margin-bottom */
+}
+
+/* Блок отображения ошибок */
+.error-block {
+  padding: 15px;
+  margin-bottom: 20px;
+  background-color: #ffdddd;
+  color: #cc0000; /* Исправлен цвет на более читаемый красный */
+  border: 1px solid #ffcccc;
+  border-radius: 4px;
+}
+
+.error-title {
+  display: block;
+  margin-bottom: 5px;
+}
+
+.error-details {
+  margin: 0;
+  white-space: pre-wrap;
+  font-family: monospace;
+}
+
+
+/* Главная таблица тренировок */
+.workouts-table {
+  border-collapse: collapse;
+  width: 100%;
+  margin-top: 15px;
+  text-align: left;
+}
+
+.workouts-table th,
+.workouts-table td {
+  border: 1px solid #ddd;
+  padding: 10px;
+}
+
+.workouts-table th {
+  background-color: #f2f2f2;
+  font-weight: bold;
+}
+
+/* Стилизация строк при наведении и редактировании */
+.workouts-table tbody tr:hover {
+  background-color: #f9f9f9;
+}
+
+.row-editing {
+  background-color: #e3f2fd !important; /* Легкий синий фон для редактируемой строки */
+}
+
+/* Кнопки действий внутри таблицы */
+.action-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 1.1em;
+  padding: 4px;
+  border-radius: 4px;
+}
+
+.action-btn:hover {
+  background-color: #e0e0e0;
+}
+
+/* Запрет переноса даты в таблице тренировок */
+.workouts-table td:first-child {
+  white-space: nowrap !important;
+  font-family: monospace; /* Моноширинный шрифт сделает все даты одинаковой ширины */
+  letter-spacing: 0.5px;
+}
+
+
+
 code,
 .counter {
   font-family: var(--mono);
@@ -302,4 +514,10 @@ input[type="text"] {
   padding: 8px 12px; /* Увеличенный внутренний отступ для высоты */
   font-size: 1.1em;   /* Пропорциональное увеличение текста внутри полей */
   box-sizing: border-box;
+}
+
+/* Полное удаление фоновых декоративных линий */
+body, #app, html {
+  background-image: none !important;
+  background-size: auto !important;
 }

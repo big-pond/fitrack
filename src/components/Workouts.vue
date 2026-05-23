@@ -334,8 +334,8 @@ onMounted( async () => {
     <hr />
 
     <!-- БЛОК ФИЛЬТРОВ (ГОД И МЕСЯЦ) -->
-    <div style="display: flex; gap: 15px; align-items: center;"> 
-      <div> 
+    <div class="filters-container"> 
+      <div class="filter-item"> 
         <label>Год: </label>
         <select v-model="selectedYear" @change="loadWorkouts">
           <option v-for="year in availableYears" :key="year" :value="year">
@@ -344,7 +344,7 @@ onMounted( async () => {
         </select>
       </div>
 
-      <div>
+      <div class="filter-item">
         <label>Месяц: </label>
         <select v-model="selectedMonth" @change="loadWorkouts">
           <option value="">Все месяцы</option>
@@ -356,20 +356,18 @@ onMounted( async () => {
     </div>
 
     <!-- РАЗДЕЛЬНАЯ СТАТИСТИКА ПО ВИДАМ СПОРТА -->
-    <div v-if="periodStats" style="margin: 15px 0; padding: 15px; background-color: #f4f4f9; border-radius: 6px; border-left: 5px solid #2196F3;">
-      <h4 style="margin-top: 0;">Статистика за {{ selectedMonthName ? selectedMonthName + ' ' : '' }}{{ selectedYear }} года:</h4>
+    <div v-if="periodStats" class="stats-container">
+      <h4 class="stats-title">Статистика за {{ selectedMonthName ? selectedMonthName + ' ' : '' }}{{ selectedYear }} год:</h4>
       
       <!-- Сетка карточек по видам спорта -->
-      <div style="display: flex; gap: 15px; flex-wrap: wrap;">
-        <div v-for="sport in periodStats" :key="sport.type" style="background: #fff; padding: 12px; border-radius: 4px; border: 1px solid #ddd; min-width: 200px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
-          <h5 style="margin: 0 0 8px 0; text-transform: uppercase; color: #333; border-bottom: 2px solid #eee; padding-bottom: 4px;">
-            {{ sport.type }}
-          </h5>
-          <div style="font-size: 0.9em; color: #555; line-height: 1.4;">
+      <div class="stats-grid">
+        <div v-for="sport in periodStats" :key="sport.type" class="stats-card">
+          <h5 class="stats-card-type"> {{ sport.type }} </h5>
+          <div class="stats-card-body">
             <div>Кол-во: <strong>{{ sport.count }}</strong></div>
             <div>Дистанция: <strong>{{ sport.totalDistance }} км</strong></div>
             <div>Время: <strong>{{ sport.totalDuration }}</strong></div>
-            <div style="color: #007BFF; margin-top: 4px;"><strong>{{ sport.avgMetric }}</strong></div>
+            <div class="stats-card-metric"><strong>{{ sport.avgMetric }}</strong></div>
           </div>
         </div>
       </div>
@@ -381,20 +379,19 @@ onMounted( async () => {
     <!-- Форма добавления/редактирования -->
     <h3>{{ isEditing ? 'Редактировать тренировку' : 'Добавить тренировку' }}</h3>
     <!-- <form @submit.prevent="handleSubmit"> -->
-    <form @submit.prevent="handleSubmit" style="display: flex; flex-direction: column; gap: 12px; max-width: 500px; width: 100%;">
+    <form @submit.prevent="handleSubmit" class="workout-form">
 
       <!-- СТРОКА 1: Дата, Тип тренировки, Дистанция -->
-      <div style="display: flex !important; flex-direction: row !important; gap: 15px; align-items: flex-start; width: 100%;">
+      <div class="form-row-custom">
         
         <!-- Поле: Дата -->
-        <div style="flex: 1 1 150px; display: flex; flex-direction: column; gap: 4px;">
-          <label style="font-size: 0.85em; color: #666; font-weight: bold;">Дата:</label>
+        <div class="col-date">
+          <label  class="form-label">Дата:</label>
           <input type="date" v-model="newWorkout.date" required style="width: 100%; box-sizing: border-box;" />
         </div>
 
-        <!-- Поле: Тип тренировки -->
-        <div style="flex: 1 1 160px; display: flex; flex-direction: column; gap: 4px;">
-          <label style="font-size: 0.85em; color: #666; font-weight: bold;">Тип тренировки:</label>
+        <div class="col-type">
+          <label  class="form-label">Тип тренировки:</label>
           <select v-model="newWorkout.type" style="width: 100%; box-sizing: border-box;">
             <option>бег</option>
             <option>ходьба</option>
@@ -405,20 +402,18 @@ onMounted( async () => {
           </select>
         </div>
 
-        <!-- Поле: Дистанция -->
-        <div style="flex: 1 1 120px; display: flex; flex-direction: column; gap: 4px;">
-          <label style="font-size: 0.85em; color: #666; font-weight: bold;">Дистанция (км):</label>
+        <div class="col-distance">
+          <label  class="form-label">Дистанция (км):</label>
           <input type="number" step="0.1" v-model.number="newWorkout.distance" placeholder="0.0" required style="width: 100%; box-sizing: border-box;" />
         </div>
 
       </div>
         
-      <!-- Контейнер для расположения рядом (Явный Flexbox) -->
-      <div style="display: flex !important; flex-direction: row !important; gap: 15px; align-items: flex-start; width: 100%; margin-top: 5px;">
+      <!-- СТРОКА 2: Длительность, Примечание -->
+      <div class="form-row-custom">
         
-        <!-- Колонка длительности (фиксированная ширина, не растягивается) -->
-        <div style="flex: 0 0 140px; display: flex; flex-direction: column; gap: 2px;">
-          <label style="font-size: 0.85em; color: #666; font-weight: bold;">Длительность:</label>
+        <div class="col-duration">
+          <label  class="form-label">Длительность:</label>
           <input 
             type="text" 
             :value="durationInputString"
@@ -443,19 +438,14 @@ onMounted( async () => {
           </div>
         </div>
 
-        <!-- Колонка примечания (занимает всё оставшееся место) -->
-        <div style="flex: 1; display: flex; flex-direction: column; gap: 2px; width: 100%;">
-          <label style="font-size: 0.85em; color: #666; font-weight: bold;">Примечание:</label>
-          <textarea 
-            v-model="newWorkout.notes" 
-            placeholder="Примечание"
-            style="width: 100%; height: 38px; padding: 8px; font-size: 1em; box-sizing: border-box; resize: vertical;"
-          ></textarea>
+        <div class="col-notes">
+          <label  class="form-label">Примечание:</label>
+          <textarea v-model="newWorkout.notes" placeholder="Дополнительные детали..." ></textarea>
         </div>
 
       </div>
         <!-- Кнопки управления формой -->
-      <div>
+      <div class="form-actions">
         <button type="submit">{{ isEditing ? 'Сохранить' : 'Добавить' }}</button>
         <button type="button" v-if="isEditing" @click="cancelEdit">Отмена</button>
       </div>
@@ -463,20 +453,20 @@ onMounted( async () => {
 
     <hr />
     <!-- Временный блок для отображения ошибок -->
-    <div v-if="errorMessage" style="padding: 15px; margin-bottom: 20px; background-color: #ffdddd; color: #aabb00; border: 1px solid #ffcccc; border-radius: 4px;">
-      <strong>Ошибка:</strong>
-      <pre style="margin: 5px 0 0 0; white-space: pre-wrap;">{{ errorMessage }}</pre>
+    <div v-if="errorMessage" class="error-block">
+      <strong class="error-title">Ошибка:</strong>
+      <pre class="error-details">{{ errorMessage }}</pre>
     </div>
 
     <div v-if="workouts.length === 0">Нет тренировок за выбранный период</div>
 
-    <table v-else border="1" cellpadding="10" style="border-collapse: collapse; width: 100%;">
+    <table v-else class="workouts-table">
       <thead>
         <tr><th>Дата</th><th>Тип</th><th>Дистанция,км</th><th>Длительность</th><th>Скорость</th><th>Примечания</th><th>Действия</th></tr>
       </thead>
       <tbody>
         <!-- Цикл v-for для перебора записей -->
-        <tr v-for="workout in workouts" :key="workout.id" :style="editingId === workout.id ? 'background-color: #f0f7ff;' : ''">
+        <tr v-for="workout in workouts" :key="workout.id" :class="{ 'row-editing': editingId === workout.id }">
           <td>{{ workout.date }}</td>
           <td>{{ workout.type }}</td>
           <td>{{ workout.distance }}</td>
@@ -490,8 +480,6 @@ onMounted( async () => {
               {{ calculateRowMetrics(workout.type, workout.distance, workout.duration).pace }}
             </span>
           </td>
-
-
           <td>{{ workout.notes || '-' }}</td>
           <td>
             <button @click="startEdit(workout)" title="Редактировать">✏️</button>
