@@ -168,13 +168,19 @@ const periodStats = computed(() => {
         totalDistance: 0,
         totalDuration: 0,
         cardioDistance: 0, // Дистанция для вычисления средних значений
-        cardioDuration: 0
+        cardioDuration: 0,
+        maxDistance: 0 // Переменная для хранения рекорда дистанции
       }
     }
 
     statsGrouped[type].count++
     statsGrouped[type].totalDistance += dist
     statsGrouped[type].totalDuration += dur
+
+    // Обновляем личный рекорд дистанции за период, если текущая больше предыдущего максимума
+    if (dist > statsGrouped[type].maxDistance) {
+      statsGrouped[type].maxDistance = dist
+    }
 
     if (dist > 0 && dur > 0) {
       statsGrouped[type].cardioDistance += dist
@@ -199,7 +205,8 @@ const periodStats = computed(() => {
       count: sport.count,
       totalDistance: sport.totalDistance.toFixed(1),
       totalDuration: sport.totalDuration ? `${Math.floor(sport.totalDuration / 60)}ч ${Math.round(sport.totalDuration % 60)}м` : '0м',
-      avgMetric: avgMetric
+      avgMetric: avgMetric,
+      maxDistance: sport.maxDistance.toFixed(1)
     }
   })
 })
@@ -368,6 +375,7 @@ onMounted( async () => {
             <div>Дистанция: <strong>{{ sport.totalDistance }} км</strong></div>
             <div>Время: <strong>{{ sport.totalDuration }}</strong></div>
             <div class="stats-card-metric"><strong>{{ sport.avgMetric }}</strong></div>
+            <div class="stats-card-record"> 🏆 Рекорд: <strong>{{ sport.maxDistance }} км</strong> </div>
           </div>
         </div>
       </div>
@@ -466,7 +474,13 @@ onMounted( async () => {
       </thead>
       <tbody>
         <!-- Цикл v-for для перебора записей -->
-        <tr v-for="workout in workouts" :key="workout.id" :class="{ 'row-editing': editingId === workout.id }">
+        <tr v-for="workout in workouts" 
+            :key="workout.id" 
+            :class="[
+              `sport-row-${workout.type}`,
+              { 'row-editing': editingId === workout.id }
+          ]"
+        >
           <td>{{ workout.date }}</td>
           <td>{{ workout.type }}</td>
           <td>{{ workout.distance }}</td>

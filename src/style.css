@@ -132,7 +132,14 @@ p {
   margin-top: 4px;
 }
 
-
+/* Стиль для отображения личного рекорда в карточке */
+.stats-card-record {
+  margin-top: 6px;
+  padding-top: 4px;
+  border-top: 1px dashed var(--border); /* Отделяем рекорд аккуратной пунктирной линией */
+  color: #efa00b; /* Приятный золотистый цвет для кубка и рекорда */
+  font-weight: 500;
+}
 
 /* Контейнер формы */
 .workout-form {
@@ -227,6 +234,38 @@ p {
   vertical-align: bottom; /* Выравниваем весь текст заголовков по нижней границе ячейки */
 }
 
+
+/* ЦВЕТОВАЯ ИНДИКАЦИЯ (Светлая тема) */
+.sport-row-бег { background-color: rgba(76, 175, 80, 0.06); }         /* Зеленый */
+.sport-row-ходьба { background-color: rgba(255, 152, 0, 0.05); }       /* Оранжевый */
+.sport-row-велосипед { background-color: rgba(33, 150, 243, 0.07); }    /* Насыщенный синий */
+.sport-row-велотренажер { background-color: rgba(233, 30, 99, 0.06); }  /* Малиново-розовый */
+.sport-row-плавание { background-color: rgba(156, 39, 176, 0.05); }    /* Фиолетовый */
+.sport-row-лыжи { background-color: rgba(0, 188, 212, 0.05); }         /* Голубой */
+
+/* ЦВЕТОВАЯ ИНДИКАЦИЯ (Адаптация под темную тему) */
+@media (prefers-color-scheme: dark) {
+  .sport-row-бег { background-color: rgba(76, 175, 80, 0.12); }
+  .sport-row-ходьба { background-color: rgba(255, 152, 0, 0.1); }
+  .sport-row-велосипед { background-color: rgba(33, 150, 243, 0.18); }
+  .sport-row-велотренажер { background-color: rgba(156, 163, 175, 0.12); }
+  .sport-row-плавание { background-color: rgba(156, 39, 176, 0.1); }
+  .sport-row-лыжи { background-color: rgba(0, 188, 212, 0.1); }
+}
+
+/* При наведении курсора строка должна становиться чуть плотнее, сохраняя свой оттенок */
+.workouts-table tbody tr:hover {
+  filter: brightness(0.95);
+}
+@media (prefers-color-scheme: dark) {
+  .workouts-table tbody tr:hover {
+    filter: brightness(1.15);
+  }
+}
+
+
+
+
 /* Стилизация строк при наведении и редактировании */
 .workouts-table tbody tr:hover {
   background-color: #f9f9f9;
@@ -277,4 +316,73 @@ input[type="text"] {
   padding: 8px 12px; /* Увеличенный внутренний отступ для высоты */
   font-size: 1.1em;   /* Пропорциональное увеличение текста внутри полей */
   box-sizing: border-box;
+}
+/* Контейнер для центрирования карточки авторизации на экране */
+.auth-wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 70vh; /* Размещает форму по центру высоты экрана */
+  width: 100%;
+}
+
+/* Карточка авторизации */
+.auth-card {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  padding: 30px;
+  border-radius: 8px;
+  box-shadow: var(--shadow);
+  width: 100%;
+  max-width: 360px; /* Компактная ширина для формы входа */
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+/* Заголовок формы */
+.auth-title {
+  margin: 0 0 10px 0;
+  text-align: center;
+  color: var(--text-h);
+  font-size: 1.4em;
+}
+
+/* Группа кнопок (чтобы они стояли в один ряд или красиво подстраивались) */
+.auth-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 5px;
+}
+
+/* Стилизация кнопок авторизации */
+.auth-actions button {
+  flex: 1;
+  padding: 10px;
+  font-size: 1em;
+  font-weight: bold;
+  cursor: pointer;
+  border-radius: 4px;
+  border: 1px solid var(--border);
+  background: var(--code-bg);
+  color: var(--text-h);
+  transition: all 0.2s ease;
+}
+
+/* Главная кнопка действия (Войти) */
+.auth-actions button.btn-primary {
+  background: var(--accent);
+  color: #fff;
+  border-color: var(--accent);
+}
+
+.auth-actions button:hover:not(:disabled) {
+  opacity: 0.9;
+  transform: translateY(-1px);
+}
+
+.auth-actions button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
 }

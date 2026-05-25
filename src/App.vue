@@ -8,15 +8,3 @@ import Workouts from './components/Workouts.vue';
     <Workouts />
   </div>
 </template>
- <style scoped>
-#app {
-  max-width: 800px;
-  margin: 0 auto;
-  padding: 20px;
-  font-family: Arial, sans-serif;
-}
-h1 {
-  text-align: center;
-  color: #2c3e50;
-}
-</style>
